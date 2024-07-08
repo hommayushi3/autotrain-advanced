@@ -9,7 +9,7 @@ from accelerate.state import PartialState
 from datasets import load_dataset, load_from_disk
 from huggingface_hub import HfApi
 from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, AutoProcessor
 
 from autotrain import is_unsloth_available, logger
 from autotrain.trainers.clm.callbacks import LoadBestPeftModelCallback, SavePeftModelCallback
@@ -397,6 +397,15 @@ def process_input_data(config):
     return train_data, valid_data
 
 
+def get_processor(config):
+    processor = AutoProcessor.from_pretrained(
+        config.model, token=config.token, trust_remote_code=ALLOW_REMOTE_CODE
+    )
+    if processor.tokenizer.chat_template is None:
+        processor.tokenizer.chat_template = DEFAULT_CHAT_TEMPLATE
+    return processor
+
+
 def get_tokenizer(config):
     special_tokens = None
     chat_template = None
@@ -697,3 +706,30 @@ def get_model(config, tokenizer):
         model = get_peft_model(model, peft_config)
 
     return model
+
+
+class VLMDataCollator:
+    def __init__(self, processor, text_column: str = "text", images_column: str = "images", mask_loss_token_id: int = -100):
+        self.processor = processor
+        self.text_column = text_column
+        self.images_column = images_column
+        self.mask_loss_token_id = mask_loss_token_id
+
+    def __call__(self, examples):
+        texts = []
+        images = []
+        for example in examples:
+            texts.append(example[self.text_column])
+            if isinstance(example[self.images_column], list):
+                images.extend(example[self.images_column])
+            else:
+                images.append(example[self.images_column])
+
+        batch = self.processor(texts, images, return_tensors="pt", padding=True)
+
+        labels = batch["input_ids"].clone()
+        if self.processor.tokenizer.pad_token_id is not None:
+            labels[labels == self.processor.tokenizer.pad_token_id] = self.mask_loss_token_id
+        batch["labels"] = labels
+
+        return batch

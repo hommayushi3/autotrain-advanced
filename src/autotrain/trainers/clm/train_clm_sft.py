@@ -41,6 +41,14 @@ def train(config):
         model=model,
         callbacks=callbacks,
     )
+    if config.use_images:
+        processor = utils.get_processor(config)
+        trainer_args["data_collator"] = utils.VLMDataCollator(
+            processor=processor,
+            mask_loss_token_id=config.mask_loss_token_id,
+            images_column=config.images_column,
+            text_column=config.text_column,
+        )
     trainer = SFTTrainer(
         **trainer_args,
         train_dataset=train_data,

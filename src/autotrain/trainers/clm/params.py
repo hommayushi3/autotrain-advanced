@@ -18,6 +18,11 @@ class LLMTrainingParams(AutoTrainParams):
     model_max_length: int = Field(2048, title="Model max length")
     padding: Optional[str] = Field("right", title="Padding side")
 
+    # vision params
+    use_images: bool = Field(False, title="Use images")
+    mask_loss_token_id: int = Field(-100, title="Mask loss token id")
+    images_column: str = Field("images", title="Images column")
+
     # trainer params
     trainer: str = Field("default", title="Trainer type")
     use_flash_attention_2: bool = Field(False, title="Use flash attention 2")

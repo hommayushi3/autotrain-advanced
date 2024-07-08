@@ -253,6 +253,7 @@ class LLMPreprocessor:
     text_column: Optional[str] = None
     prompt_column: Optional[str] = None
     rejected_text_column: Optional[str] = None
+    images_column: Optional[str] = None
     local: Optional[bool] = False
 
     def __post_init__(self):
@@ -264,6 +265,8 @@ class LLMPreprocessor:
             self.prompt_column = None
         if self.rejected_text_column is not None and self.rejected_text_column not in self.train_data.columns:
             self.rejected_text_column = None
+        if self.images_column is not None and self.images_column not in self.train_data.columns:
+            self.images_column = None
 
         # make sure no reserved columns are in train_data or valid_data
         for column in RESERVED_COLUMNS + LLM_RESERVED_COLUMNS:
@@ -300,6 +303,10 @@ class LLMPreprocessor:
             drop_cols.append(self.rejected_text_column)
             train_df.loc[:, "autotrain_rejected_text"] = train_df[self.rejected_text_column]
             valid_df.loc[:, "autotrain_rejected_text"] = valid_df[self.rejected_text_column]
+        if self.images_column is not None:
+            drop_cols.append(self.images_column)
+            train_df.loc[:, "autotrain_images"] = train_df[self.images_column]
+            valid_df.loc[:, "autotrain_images"] = valid_df[self.images_column]
 
         # drop drop_cols
         train_df = train_df.drop(columns=drop_cols)

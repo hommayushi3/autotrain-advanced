@@ -267,6 +267,8 @@ def llm_munge_data(params, local):
             col_map["rejected_text"] = params.rejected_text_column
         if params.prompt_text_column is not None:
             col_map["prompt"] = params.prompt_text_column
+        if params.images_column is not None:
+            col_map["images"] = params.images_column
         dset = AutoTrainDataset(
             train_data=[train_data_path],
             task="lm_training",

@@ -472,11 +472,13 @@ class AutoTrainDataset:
 
         elif self.task == "lm_training":
             text_column = self.column_mapping["text"]
+            images_column = self.column_mapping.get("images")
             prompt_column = self.column_mapping.get("prompt")
             rejected_text_column = self.column_mapping.get("rejected_text")
             preprocessor = LLMPreprocessor(
                 train_data=self.train_df,
                 text_column=text_column,
+                images_column=images_column,
                 prompt_column=prompt_column,
                 rejected_text_column=rejected_text_column,
                 username=self.username,

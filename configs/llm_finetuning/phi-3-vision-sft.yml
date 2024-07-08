@@ -1,0 +1,49 @@
+task: llm-sft
+base_model: microsoft/Phi-3-vision-128k-instruct
+project_name: autotrain-llama3-70b-math-v1
+log: tensorboard
+backend: local
+
+data:
+  path: HuggingFaceM4/DocumentVQA
+  train_split: train
+  valid_split: null
+  chat_template: null
+  column_mapping:
+    text_column: text
+
+params:
+  use_flash_attention_2: true
+  block_size: 2048
+  model_max_length: 8192
+  epochs: 2
+  batch_size: 1
+  lr: 1e-5
+  peft: true
+  lora_r: 4
+  lora_alpha: 8
+  lora_dropout: 0.05
+  merge_adapter: true
+  quantization: int4
+  target_modules:
+    - k_proj
+    - q_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - down_proj
+    - up_proj
+  padding: right
+  optimizer: paged_adamw_8bit
+  scheduler: cosine
+  gradient_accumulation: 1
+  mixed_precision: bf16
+  # vlm config
+  use_images: true
+  mask_loss_token_id: -100
+  images_column: images
+
+hub:
+  username: ${HF_USERNAME}
+  token: ${HF_TOKEN}
+  push_to_hub: true
